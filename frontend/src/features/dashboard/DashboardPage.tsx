@@ -5,6 +5,7 @@ import { AppShell } from "../../components/AppShell.tsx";
 import { Card } from "../../components/Card.tsx";
 import { DashboardProvider, useDashboard } from "../../provider/DashboardProvider.tsx";
 import { ActivityPanels } from "../activity/ActivityPanels.tsx";
+import { LiveCallBanner } from "../activity/LiveCallBanner.tsx";
 import { useFacilityViews, useFilters } from "../filters.ts";
 import { MapToolbar } from "../map/MapToolbar.tsx";
 import { NetworkMap } from "../map/NetworkMap.tsx";
@@ -41,7 +42,7 @@ const Side = styled.aside`
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "center" });
 
 function Dashboard() {
-  const { data, error, live, events, busy, selectedId, select, route, newRequest, simulate, reset, decide } = useDashboard();
+  const { data, error, live, events, calls, busy, selectedId, select, route, newRequest, simulate, reset, decide } = useDashboard();
   const filters = useFilters();
   const incident = data?.incident ?? null;
   const views = useFacilityViews(data?.network.facilities ?? [], incident, filters);
@@ -70,6 +71,7 @@ function Dashboard() {
         <StatsRow network={data?.network ?? null} />
         <DemoToolbar demo={data?.demo ?? null} hasIncident={!!incident && !["approved", "closed"].includes(incident.status)}
           busy={busy} live={live} error={error} onSimulate={simulate} onReset={reset} />
+        <LiveCallBanner calls={calls} />
         <MainCard>
           <MapSide>
             <MapToolbar filters={filters} />

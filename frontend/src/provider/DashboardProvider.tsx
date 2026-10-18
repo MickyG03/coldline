@@ -3,6 +3,7 @@ import {
   DASHBOARD, DECIDE, EVENTS, OPEN_DEMO_INCIDENT, RESET, ROUTE, SIMULATE, request, subscribe,
   type BusEvent, type DemoStatus, type Incident, type Network, type Route,
 } from "../connection/index.ts";
+import { dropStaleCalls, foldCallEvent, type LiveCall } from "./liveCalls.ts";
 
 // Dashboard data: one query for everything on screen, refetched (debounced) whenever the
 // backend event bus publishes something. Actions are thin wrappers over the mutations.
@@ -18,6 +19,8 @@ interface DashboardContextValue {
   error: string | null;
   live: boolean;
   events: BusEvent[];
+  /** Real phone calls in progress (and ones that just ended). */
+  calls: LiveCall[];
   busy: string | null;
   selectedId: string | null;
   select: (facilityId: string | null) => void;
@@ -37,6 +40,7 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
   const [error, setError] = useState<string | null>(null);
   const [live, setLive] = useState(false);
   const [events, setEvents] = useState<BusEvent[]>([]);
+  const [calls, setCalls] = useState<LiveCall[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [selectedId, select] = useState<string | null>(null);
   const [route, setRoute] = useState<Route | null>(null);
@@ -62,6 +66,8 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
   useEffect(() => {
     void load();
     return subscribe<{ events: BusEvent }>(EVENTS, {}, ({ events: e }) => {
+      setCalls((prev) => foldCallEvent(prev, e));
+      if (e.type === "transcript.line" && (e.payload as { callId?: string }).callId) return; // no refetch per spoken turn
       setEvents((prev) => [e, ...prev].slice(0, 60));
       refresh();
     }, (ok) => {
@@ -69,6 +75,13 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
       if (ok) refresh();
     });
   }, [load, refresh]);
+
+  // Ended calls linger briefly, then drop off.
+  useEffect(() => {
+    if (!calls.some((c) => c.endedAt)) return;
+    const id = window.setInterval(() => setCalls((prev) => dropStaleCalls(prev)), 2000);
+    return () => window.clearInterval(id);
+  }, [calls]);
 
   // Follow the recommendation unless the user picked a site; drop a selection that left the incident.
   const incident = data?.incident ?? null;
@@ -99,7 +112,7 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
   }, [load]);
 
   const value = useMemo<DashboardContextValue>(() => ({
-    data, error, live, events, busy,
+    data, error, live, events, calls, busy,
     route: route?.facilityId === focusId ? route : null,
     selectedId: focusId,
     select,
@@ -116,7 +129,7 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
       if (!incident) throw new Error("No request to decide on.");
       return request(DECIDE, { incidentId: incident.id, action, facilityId, decidedBy: DECIDED_BY });
     }),
-  }), [data, error, live, events, busy, route, focusId, run, incident?.id]);
+  }), [data, error, live, events, calls, busy, route, focusId, run, incident?.id]);
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;
 }

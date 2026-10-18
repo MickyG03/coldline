@@ -128,6 +128,9 @@ const describe = (e: BusEvent) => {
     case "response.judged": return `${p.facilityId} judged by Jev: ${p.response?.status}`;
     case "decision.made": return `${p.decision?.decision} by ${p.decision?.decidedBy}`;
     case "transcript.line": return `${p.caller}: ${String(p.text).slice(0, 60)}`;
+    case "caller.routed": return `incoming call: ${p.label ?? p.role}`;
+    case "caller.refused": return `refused call from an unregistered number`;
+    case "call.ended": return `${p.role} call ended (${p.reason})`;
     case "alert.sent": return `${p.status} alert to ${p.recipient}`;
     case "demo.status": return p.simulating ? "simulation started" : `simulation finished${p.error ? `: ${p.error}` : ""}`;
     default: return e.type;

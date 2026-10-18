@@ -36,6 +36,8 @@ const agent = new guava.Agent({
 interface CallState {
   role: CallerRole;
   fromNumber: string | null;
+  /** Incident this call belongs to, once known (pharmacy: after intake opens it). */
+  incidentId?: string;
   brief?: RequestBrief;
   /** Coordinator answer already saved (task completed, or saved at session end). */
   answered?: boolean;
@@ -75,6 +77,9 @@ agent.onCallStart(async (call) => {
   }
   bus.publish("caller.routed", {
     incidentId: null, callId: call.id, role: role.role, facilityId: role.role === "coordinator" ? role.facilityId : undefined, via,
+    label: role.role === "pharmacy" ? getPharmacy(role.pharmacyId)?.name
+      : role.role === "coordinator" ? getFacility(role.facilityId)?.name
+      : "Coldline staff",
   });
 
   if (role.role === "pharmacy") return startIntake(call, role.pharmacyId);
@@ -133,6 +138,7 @@ agent.onTaskComplete("pharmacy_intake", async (call) => {
       minutesSinceFailure: await int(call, "minutes_since_failure"),
     }, jevJudge);
     logger.info("Incident %s opened, %d candidates", result.incident.id, result.match.candidates.length);
+    state.incidentId = result.incident.id;
     await call.hangup(intakeClosingLine(result));
   } catch (err) {
     logger.error("Intake failed: %s", err);
@@ -281,9 +287,36 @@ agent.onTaskComplete("staff_approval", async (call) => {
   await call.hangup(`Read this back to the staff member: "${outcome.message}" Then thank them and say goodbye.`);
 });
 
-agent.onSessionEnd(async (call) => {
+// --- live transcript (real phone calls only) ---
+// Simulated callers (agent.test) publish their own lines from the demo runner, so only PSTN
+// calls stream here; otherwise every simulated turn would show up twice.
+
+function liveLine(call: guava.Call, speaker: "agent" | "caller", text: string) {
+  const state = calls.get(call.id);
+  if (!state?.fromNumber || state.role.role === "unknown" || !text.trim()) return;
+  bus.publish("transcript.line", {
+    incidentId: incidentOf(state),
+    callId: call.id,
+    facilityId: state.role.role === "coordinator" ? state.role.facilityId : undefined,
+    caller: state.role.role === "coordinator" ? "coordinator" : state.role.role,
+    speaker,
+    text: text.trim(),
+  });
+}
+
+const incidentOf = (state: CallState) => state.incidentId ?? state.brief?.incident.id ?? state.approval?.incident.id ?? null;
+
+agent.onCallerSpeech(async (call, event) => liveLine(call, "caller", event.utterance));
+agent.onAgentSpeech(async (call, event) => liveLine(call, "agent", event.utterance));
+
+agent.onSessionEnd(async (call, event) => {
   const state = calls.get(call.id);
   calls.delete(call.id);
+  if (state && state.role.role !== "unknown") {
+    bus.publish("call.ended", {
+      incidentId: incidentOf(state), callId: call.id, role: state.role.role, reason: event.termination_reason,
+    });
+  }
   // A coordinator call that drops (or that the agent wraps up) before the task completes still gets
   // recorded if they answered anything; Jev and the rules decide how much it counts.
   if (state?.brief && !state.answered && ["reported_capacity", "answer_summary"].some((k) => call.hasField(k))) {

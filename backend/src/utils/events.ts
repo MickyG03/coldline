@@ -21,10 +21,21 @@ export interface EventMap {
   };
   "decision.made": { decision: Decision };
   /** Inbound call identified by caller ID (or a chat-mode override). incidentId is null until known. */
-  "caller.routed": { incidentId: string | null; callId: string; role: string; facilityId?: string; via: "caller_id" | "override" };
+  "caller.routed": {
+    incidentId: string | null; callId: string; role: string; facilityId?: string; via: "caller_id" | "override";
+    /** Who is on the line, for the dashboard's incoming-call indicator (pharmacy / facility name, "Coldline staff"). */
+    label?: string;
+  };
   "caller.refused": { incidentId: null; callId: string; fromNumber: string | null; reason: string };
-  /** One spoken turn on a call (simulated callers today), for the dashboard's live transcript. */
-  "transcript.line": { incidentId: string | null; facilityId?: string; caller: string; speaker: "agent" | "caller"; text: string };
+  /** A routed call hung up. */
+  "call.ended": { incidentId: string | null; callId: string; role: string; reason: string };
+  /**
+   * One spoken turn on a call, for the dashboard's live transcript. Simulated callers set no callId;
+   * real phone calls carry their callId (incidentId stays null until the pharmacy intake opens one).
+   */
+  "transcript.line": {
+    incidentId: string | null; callId?: string; facilityId?: string; caller: string; speaker: "agent" | "caller"; text: string;
+  };
   /** Dashboard demo runner started/stopped. */
   "demo.status": { incidentId: string | null; simulating: boolean; redteam: boolean; error: string | null };
   /** SMS alert outcome. "simulated" = SMS off or no valid number; nothing was texted. */
