@@ -1,4 +1,4 @@
-import styled, { css } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { Icon } from "../../components/Icon.tsx";
 import { StatusDot } from "../../components/StatusDot.tsx";
 
@@ -99,6 +99,52 @@ export function PharmacyMarker({ name }: { name: string }) {
     <Anchor title={name}>
       <Badge><Icon name="building" size="lg" /></Badge>
       <Label>{name}</Label>
+    </Anchor>
+  );
+}
+
+const Van = styled.div<{ $delivered: boolean }>`
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: ${({ theme }) => theme.border.radius.pill};
+  background: ${({ theme, $delivered }) => ($delivered ? theme.palette.statusConfirmed : theme.palette.primary)};
+  color: ${({ theme }) => theme.palette.surface};
+  border: ${({ theme }) => theme.border.stroke.thick} solid ${({ theme }) => theme.palette.surface};
+  box-shadow: ${({ theme }) => theme.border.shadow.marker};
+  ${({ $delivered, theme }) => !$delivered && css`
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: ${theme.border.radius.pill};
+      border: ${theme.border.stroke.medium} solid ${theme.palette.primary};
+      animation: ${courierPing} 1.6s ease-out infinite;
+    }
+  `}
+`;
+
+const courierPing = keyframes`
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+`;
+
+const VanLabel = styled(Label)`
+  margin-top: ${({ theme }) => theme.sizes.space.sm};
+  font-weight: ${({ theme }) => theme.fonts.weight.medium};
+`;
+
+/** Simulated refrigerated courier moving along the approved route. */
+export function CourierMarker({ etaMinutes, delivered }: { etaMinutes: number; delivered: boolean }) {
+  return (
+    <Anchor title="Simulated cold-chain courier">
+      <Van $delivered={delivered}><Icon name={delivered ? "check" : "van"} size="md" /></Van>
+      <VanLabel>
+        {delivered ? "Delivered" : `Courier · ${etaMinutes} min`}
+        <Hood>2–8 °C · simulated</Hood>
+      </VanLabel>
     </Anchor>
   );
 }

@@ -85,7 +85,9 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
 
   // Follow the recommendation unless the user picked a site; drop a selection that left the incident.
   const incident = data?.incident ?? null;
-  const focusId = selectedId ?? incident?.recommendation?.facility.id ?? null;
+  // Once a site is approved, the map follows it (the courier drives there); before that, the recommendation.
+  const approvedId = incident?.decisions.find((d) => d.decision === "approved")?.facility?.id ?? null;
+  const focusId = selectedId ?? approvedId ?? incident?.recommendation?.facility.id ?? null;
   useEffect(() => {
     if (!incident || !focusId) {
       setRoute(null);

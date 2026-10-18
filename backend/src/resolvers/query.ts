@@ -3,16 +3,19 @@ import { smsEnabled } from "../application/guava/sms.ts";
 import { getIncident, listAudit, listFacilityResponses, listIncidents } from "../database/queries/index.ts";
 import { getFacilities, getFacility, getPharmacies, getPharmacy } from "../database/seed/index.ts";
 import { notFound } from "../middleware/index.ts";
-import { businessClock, currentIncidentId, demo } from "../services/demo.ts";
+import { businessClock, demo } from "../services/demo.ts";
 import { toAuditEntry } from "./types.ts";
 
 interface RouteGeometry { encodedPolyline: string; durationMinutes: number; distanceKm: number }
 const routeCache = new Map<string, Promise<RouteGeometry>>();
 
-/** Active request, else the newest decided one (so a just-approved request stays on screen until reset). */
+/**
+ * The request on screen: the newest one that isn't closed, decided or not. A just-approved request
+ * stays up (with its courier) until reset or a newer request arrives; an older request that was
+ * left open must not take over the dashboard when the newest one gets approved.
+ */
 export function currentIncident() {
-  const id = currentIncidentId() ??
-    listIncidents().find((i) => !demo.redTeamIncidentIds.has(i.id) && i.status !== "closed")?.id;
+  const id = listIncidents().find((i) => !demo.redTeamIncidentIds.has(i.id) && i.status !== "closed")?.id;
   return id ? getIncident(id) : undefined;
 }
 

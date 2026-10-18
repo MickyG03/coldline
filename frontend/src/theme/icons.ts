@@ -29,6 +29,7 @@ export const icons = {
     refresh: "M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7",
     shield: "M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6l-7-3Z",
     message: "M4 5h16v11H8l-4 4V5Z",
+    van: "M2 7h11v9H2zM13 10h4l3 3v3h-7zM6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z M5 11.5h5M7.5 9v5",
   },
 } as const;
 
