@@ -1,0 +1,38 @@
+[
+  {
+    "id": "arts-district-clinic",
+    "name": "Arts District Clinic Cold Room",
+    "synthetic": true,
+    "address": "Arts District, Los Angeles, CA",
+    "lat": 34.0403,
+    "lng": -118.2321,
+    "coordinator": "Facility A coordinator",
+    "phoneEnv": "FACILITY_A_PHONE",
+    "capacityUnits": { "refrigerated": 400, "frozen": 0 },
+    "receivingHours": "08:00-18:00"
+  },
+  {
+    "id": "westlake-health",
+    "name": "Westlake Health Center",
+    "synthetic": true,
+    "address": "Westlake, Los Angeles, CA",
+    "lat": 34.0577,
+    "lng": -118.277,
+    "coordinator": "Facility B coordinator",
+    "phoneEnv": "FACILITY_B_PHONE",
+    "capacityUnits": { "refrigerated": 250, "frozen": 150 },
+    "receivingHours": "07:00-22:00"
+  },
+  {
+    "id": "glendale-depot",
+    "name": "Glendale Community Vaccine Depot",
+    "synthetic": true,
+    "address": "Glendale, CA",
+    "lat": 34.1425,
+    "lng": -118.2551,
+    "coordinator": "Facility C coordinator",
+    "phoneEnv": "FACILITY_C_PHONE",
+    "capacityUnits": { "refrigerated": 800, "frozen": 300 },
+    "receivingHours": "24h"
+  }
+]

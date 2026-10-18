@@ -1,0 +1,13 @@
+[
+  {
+    "id": "eastside-rx",
+    "name": "Eastside Community Pharmacy",
+    "synthetic": true,
+    "address": "Boyle Heights, Los Angeles, CA",
+    "lat": 34.0407,
+    "lng": -118.2096,
+    "phoneEnv": "PHARMACY_PHONE",
+    "responsibleStaff": { "name": "Pharmacist on duty", "phoneEnv": "STAFF_PHONE" },
+    "backupFacilityIds": ["arts-district-clinic", "westlake-health", "glendale-depot"]
+  }
+]
