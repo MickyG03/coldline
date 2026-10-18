@@ -4,6 +4,7 @@ import { Card } from "../../components/Card.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { StatusDot } from "../../components/StatusDot.tsx";
 import { useSpeakingWave, Waveform } from "../../components/Waveform.tsx";
+import { ConversationBlock, groupConversations } from "./Conversations.tsx";
 import { Mono, Muted, Overline, SectionTitle } from "../../components/Text.tsx";
 import type { Alert, BusEvent, Incident } from "../../connection/index.ts";
 import type { LiveCall } from "../../provider/liveCalls.ts";
@@ -21,7 +22,7 @@ const Grid = styled.div`
 const Panel = styled(Card)`
   display: flex;
   flex-direction: column;
-  max-height: 420px;
+  max-height: 520px;
 `;
 
 const HeadRight = styled.div`
@@ -54,9 +55,6 @@ const Turn = styled.div<{ $agent: boolean }>`
   color: ${({ theme, $agent }) => ($agent ? theme.palette.textSecondary : theme.palette.textPrimary)};
 `;
 
-const Who = styled(Mono)<{ $agent: boolean }>`
-  color: ${({ theme, $agent }) => ($agent ? theme.palette.primary : theme.palette.textMuted)};
-`;
 
 const Entry = styled.div`
   display: grid;
@@ -82,8 +80,11 @@ function Transcript({ incident, live, calls }: { incident: Incident | null; live
   const intake = calls.filter((c) => c.role === "pharmacy" && !c.endedAt)
     .flatMap((c) => c.lines.map((l) => ({ ...l, caller: "pharmacy", facilityId: null })));
   const lines = intake.length ? intake : incident?.transcript ?? [];
-  const wave = useSpeakingWave(lines.length, lines[lines.length - 1]?.speaker ?? null, live);
   const names = new Map(incident?.facilities.map((f) => [f.facility.id, f.facility.name]) ?? []);
+  const conversations = groupConversations(lines, names, incident?.pharmacy.name ?? "Pharmacy");
+  const last = lines[lines.length - 1];
+  const activeKey = last ? conversations.find((c) => c.lines.includes(last))?.key : undefined;
+  const wave = useSpeakingWave(lines.length, last?.speaker ?? null, live);
   useEffect(() => {
     // Keep the newest turn in view without scrolling the page.
     if (body.current) body.current.scrollTop = body.current.scrollHeight;
@@ -94,19 +95,12 @@ function Transcript({ incident, live, calls }: { incident: Incident | null; live
         <SectionTitle>Live transcript</SectionTitle>
         <HeadRight>
           {live && <Waveform state={wave.state} tone={wave.tone} bars={10} height={18} />}
-          <Overline>{lines.length} turns</Overline>
+          <Overline>{conversations.length} {conversations.length === 1 ? "call" : "calls"} · {lines.length} turns</Overline>
         </HeadRight>
       </Head>
       <Body ref={body}>
         {!lines.length && <Empty>Calls appear here as they happen: the pharmacy's report, then coordinators (or simulated responders).</Empty>}
-        {lines.map((l, i) => (
-          <Turn key={i} $agent={l.speaker === "agent"}>
-            <Who $agent={l.speaker === "agent"} title={l.facilityId ? names.get(l.facilityId) : undefined}>
-              {l.speaker === "agent" ? `agent→${l.caller}` : l.caller}
-            </Who>
-            <span>{l.text}</span>
-          </Turn>
-        ))}
+        {conversations.map((c) => <ConversationBlock key={c.key} c={c} active={live && c.key === activeKey} />)}
       </Body>
     </Panel>
   );

@@ -1,5 +1,5 @@
 import { jevJudge } from "../application/typesafe/jev.ts";
-import { listActiveIncidents, listIncidents } from "../database/queries/index.ts";
+import { getIncident, listActiveIncidents, listFacilityResponses, listIncidents } from "../database/queries/index.ts";
 import { getPharmacies } from "../database/seed/index.ts";
 import { clockNow, setClock } from "../utils/clock.ts";
 import { bus } from "../utils/events.ts";
@@ -67,6 +67,21 @@ export function startSimulation(opts: { incidentId?: string; redteam?: boolean; 
   if (demo.simulating) throw new Error("A simulation is already running.");
   const incidentId = opts.incidentId ?? currentIncidentId();
   if (!incidentId) throw new Error("No open request. Start a new request first.");
+  const incident = getIncident(incidentId);
+  if (!incident || ["approved", "rejected", "closed"].includes(incident.status)) {
+    throw new Error("This request is already decided. Start a new request first.");
+  }
+  // Only coordinators of sites the matcher actually picked have a request to answer.
+  const matched = new Set(listFacilityResponses(incidentId).map((r) => r.facilityId));
+  const personas = coordinatorPersonas.filter((p) => !!p.facilityId && matched.has(p.facilityId));
+  if (!personas.length) {
+    throw new Error(
+      matched.size
+        ? "None of the simulated coordinators' sites were matched for this request."
+        : `No backup site can hold ${incident.totalUnits.toLocaleString("en-US")} ${incident.storageType} units, ` +
+          "so there is no coordinator to simulate. Try a request under 400 doses.",
+    );
+  }
   if (!opts.realClock) setDemoClock();
   demo.simulating = true;
   demo.redteam = !!opts.redteam;
@@ -77,7 +92,7 @@ export function startSimulation(opts: { incidentId?: string; redteam?: boolean; 
     try {
       await simulateResponders({
         incidentId,
-        personas: coordinatorPersonas,
+        personas,
         log: (persona, line) => lineOf(persona, incidentId, line),
       });
       if (opts.redteam) {
