@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { Card } from "../../components/Card.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { StatusDot } from "../../components/StatusDot.tsx";
+import { useSpeakingWave, Waveform } from "../../components/Waveform.tsx";
 import { Mono, Muted, Overline, SectionTitle } from "../../components/Text.tsx";
 import type { Alert, BusEvent, Incident } from "../../connection/index.ts";
 import { fmtTime } from "../status.ts";
@@ -20,6 +21,12 @@ const Panel = styled(Card)`
   display: flex;
   flex-direction: column;
   max-height: 420px;
+`;
+
+const HeadRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.sizes.space.md};
 `;
 
 const Head = styled.div`
@@ -67,9 +74,10 @@ const Empty = styled(Muted)`
 
 const ALERT_DOT = { sent: "confirmed", simulated: "unknown", failed: "unavailable" } as const;
 
-function Transcript({ incident }: { incident: Incident | null }) {
+function Transcript({ incident, live }: { incident: Incident | null; live: boolean }) {
   const body = useRef<HTMLDivElement>(null);
   const lines = incident?.transcript ?? [];
+  const wave = useSpeakingWave(lines.length, lines[lines.length - 1]?.speaker ?? null, live);
   const names = new Map(incident?.facilities.map((f) => [f.facility.id, f.facility.name]) ?? []);
   useEffect(() => {
     // Keep the newest turn in view without scrolling the page.
@@ -79,7 +87,10 @@ function Transcript({ incident }: { incident: Incident | null }) {
     <Panel>
       <Head>
         <SectionTitle>Live transcript</SectionTitle>
-        <Overline>{lines.length} turns</Overline>
+        <HeadRight>
+          {live && <Waveform state={wave.state} tone={wave.tone} bars={10} height={18} />}
+          <Overline>{lines.length} turns</Overline>
+        </HeadRight>
       </Head>
       <Body ref={body}>
         {!lines.length && <Empty>Calls appear here as coordinators phone in (or when you simulate responders).</Empty>}
@@ -161,10 +172,10 @@ function Activity({ events }: { events: BusEvent[] }) {
   );
 }
 
-export function ActivityPanels({ incident, events }: { incident: Incident | null; events: BusEvent[] }) {
+export function ActivityPanels({ incident, events, live }: { incident: Incident | null; events: BusEvent[]; live: boolean }) {
   return (
     <Grid>
-      <Transcript incident={incident} />
+      <Transcript incident={incident} live={live} />
       <Pager alerts={incident?.alerts ?? []} />
       <Activity events={events} />
     </Grid>

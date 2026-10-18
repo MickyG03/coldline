@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { Card } from "../../components/Card.tsx";
 import { Icon } from "../../components/Icon.tsx";
 import { StatusDot } from "../../components/StatusDot.tsx";
+import { useSpeakingWave, Waveform } from "../../components/Waveform.tsx";
 import { Mono, Muted, Overline } from "../../components/Text.tsx";
 import type { LiveCall } from "../../provider/liveCalls.ts";
 
@@ -35,6 +36,11 @@ const Who = styled.div`
   font-weight: ${({ theme }) => theme.fonts.weight.medium};
 `;
 
+const Speaking = styled(Mono)`
+  min-width: 128px;
+  color: ${({ theme }) => theme.palette.textMuted};
+`;
+
 const Lines = styled.div`
   max-height: 180px;
   overflow-y: auto;
@@ -62,6 +68,8 @@ const elapsed = (from: string, to: number) => {
 function Call({ call, now }: { call: LiveCall; now: number }) {
   const body = useRef<HTMLDivElement>(null);
   const ended = !!call.endedAt;
+  const last = call.lines[call.lines.length - 1] ?? null;
+  const wave = useSpeakingWave(call.lines.length, last?.speaker ?? null, !ended);
   useEffect(() => {
     if (body.current) body.current.scrollTop = body.current.scrollHeight;
   }, [call.lines.length]);
@@ -73,6 +81,10 @@ function Call({ call, now }: { call: LiveCall; now: number }) {
         <Who>
           {ended ? "Call ended" : "Incoming call"} · {call.label}
         </Who>
+        <Waveform state={wave.state} tone={wave.tone} />
+        <Speaking>
+          {wave.state === "speaking" ? `${wave.tone === "agent" ? "coldline" : call.role} speaking` : wave.state === "listening" ? "listening…" : ""}
+        </Speaking>
         <Overline>{call.role}</Overline>
         <Mono>{elapsed(call.startedAt, call.endedAt ? new Date(call.endedAt).getTime() : now)}</Mono>
       </Head>

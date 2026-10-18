@@ -88,7 +88,8 @@ function Dashboard() {
           </Side>
         </MainCard>
         <div id="activity">
-          <ActivityPanels incident={incident} events={events} />
+          <ActivityPanels incident={incident} events={events}
+            live={!!data?.demo.simulating || calls.some((c) => !c.endedAt)} />
         </div>
       </Content>
     </AppShell>
