@@ -312,10 +312,12 @@ const CALLER_SETTLE_MS = 1200;
 const pendingCaller = new Map<string, { id?: string; text: string; timer: NodeJS.Timeout; call: guava.Call }>();
 
 const norm = (t: string) => t.toLowerCase().replace(/(uh|um|er|ah)/g, "").replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+/** Same turn re-recognized: most of the shorter version's words appear in the longer one. */
 const sameTurn = (a: string, b: string) => {
-  const [x, y] = [norm(a), norm(b)];
-  const head = (t: string) => t.slice(0, 24);
-  return !!x && !!y && (x.includes(head(y)) || y.includes(head(x)));
+  const [x, y] = [norm(a).split(" ").filter(Boolean), norm(b).split(" ").filter(Boolean)];
+  if (!x.length || !y.length) return false;
+  const [short, long] = x.length <= y.length ? [x, new Set(y)] : [y, new Set(x)];
+  return short.filter((w) => long.has(w)).length / short.length >= 0.6;
 };
 
 function flushCaller(callId: string) {
