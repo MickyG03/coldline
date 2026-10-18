@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node --import tsx src/server/index.ts",
-    "dev": "node --watch --import tsx src/server/index.ts",
+    "dev": "node --watch-path=src --watch-path=agents --watch-path=../.env --import tsx src/server/index.ts",
     "chat": "node --import tsx src/server/index.ts --chat",
     "check": "node --import tsx scripts/check.ts",
     "demo:incident": "node --import tsx scripts/demo-incident.ts",

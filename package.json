@@ -1,7 +1,10 @@
 {
   "name": "coldline",
   "private": true,
-  "workspaces": ["backend", "frontend"],
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "dev:backend": "npm run dev -w @coldline/backend",
     "dev:frontend": "npm run dev -w @coldline/frontend",
@@ -11,6 +14,10 @@
     "simulate:redteam": "npm run simulate:redteam -w @coldline/backend --",
     "check": "npm run check -w @coldline/backend",
     "demo:incident": "npm run demo:incident -w @coldline/backend",
-    "build": "npm run build -w @coldline/frontend"
+    "build": "npm run build -w @coldline/frontend",
+    "dev": "concurrently -k -n api,web -c green,cyan \"npm:dev:backend\" \"npm:dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
   }
 }
