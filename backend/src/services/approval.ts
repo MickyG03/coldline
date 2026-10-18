@@ -50,7 +50,7 @@ export function describeOption(o: ApprovalOption): string {
   ].filter(Boolean).join(", ");
   const label = o.status === "confirmed"
     ? "CONFIRMED"
-    : `CONDITIONAL, not confirmed — condition: ${r.conditions?.split(" | ")[0]}`;
+    : `CONDITIONAL, not confirmed — condition: ${r.conditions?.split(" | ")[0].replace(/\.+$/, "")}`;
   return `Option ${o.rank}: ${o.facility.name}, ${eta}, ${label}. Evidence: ${evidence || "none recorded"}.`;
 }
 

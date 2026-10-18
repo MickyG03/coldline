@@ -5,5 +5,7 @@ node_modules/
 .venv/
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 install-guava.ps1
 dist/

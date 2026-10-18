@@ -36,6 +36,8 @@ interface CallState {
   role: CallerRole;
   fromNumber: string | null;
   brief?: RequestBrief;
+  /** Coordinator answer already saved (task completed, or saved at session end). */
+  answered?: boolean;
   approval?: { incident: Incident; options: ApprovalOption[] };
 }
 const calls = new Map<string, CallState>();
@@ -179,9 +181,8 @@ async function startCoordinator(call: guava.Call, facilityId: string) {
   });
 }
 
-agent.onTaskComplete("coordinator_response", async (call) => {
-  const brief = calls.get(call.id)?.brief;
-  if (!brief) return call.hangup();
+/** Judge and store what the coordinator said. `partial` = the call ended before the task completed. */
+async function saveCoordinatorAnswer(call: guava.Call, brief: RequestBrief, partial = false) {
   const answer = {
     reportedCapacity: await int(call, "reported_capacity"),
     receivingCutoff: await str(call, "receiving_cutoff"),
@@ -189,10 +190,19 @@ agent.onTaskComplete("coordinator_response", async (call) => {
     transcript: "",
   };
   answer.transcript = `${await str(call, "answer_summary")} (capacity: ${answer.reportedCapacity ?? "not given"}; ` +
-    `receiving until: ${answer.receivingCutoff || "not given"}; conditions: ${answer.conditions || "none"})`;
+    `receiving until: ${answer.receivingCutoff || "not given"}; conditions: ${answer.conditions || "none"})` +
+    (partial ? " [call ended before every question was confirmed]" : "");
+  const result = await submitCoordinatorAnswer(brief, answer, jevJudge);
+  logger.info("%s -> %s (%s)", brief.facilityName, result.assessment.status, result.assessment.reasons.join("; "));
+  return result;
+}
+
+agent.onTaskComplete("coordinator_response", async (call) => {
+  const state = calls.get(call.id);
+  if (!state?.brief) return call.hangup();
   try {
-    const result = await submitCoordinatorAnswer(brief, answer, jevJudge);
-    logger.info("%s -> %s (%s)", brief.facilityName, result.assessment.status, result.assessment.reasons.join("; "));
+    state.answered = true;
+    const result = await saveCoordinatorAnswer(call, state.brief);
     await call.hangup(coordinatorClosingLine(result));
   } catch (err) {
     logger.error("Coordinator response failed: %s", err);
@@ -258,7 +268,17 @@ agent.onTaskComplete("staff_approval", async (call) => {
 });
 
 agent.onSessionEnd(async (call) => {
+  const state = calls.get(call.id);
   calls.delete(call.id);
+  // A coordinator call that drops (or that the agent wraps up) before the task completes still gets
+  // recorded if they answered anything; Jev and the rules decide how much it counts.
+  if (state?.brief && !state.answered && ["reported_capacity", "answer_summary"].some((k) => call.hasField(k))) {
+    try {
+      await saveCoordinatorAnswer(call, state.brief, true);
+    } catch (err) {
+      logger.error("Saving partial coordinator answer failed: %s", err);
+    }
+  }
 });
 
 export { agent };

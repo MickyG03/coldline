@@ -9,7 +9,9 @@
     "chat": "node --import tsx src/server/index.ts --chat",
     "check": "node --import tsx scripts/check.ts",
     "demo:incident": "node --import tsx scripts/demo-incident.ts",
-    "demo:agent": "node --import tsx scripts/demo-agent.ts"
+    "demo:agent": "node --import tsx scripts/demo-agent.ts",
+    "simulate": "node --import tsx scripts/simulate.ts",
+    "simulate:redteam": "node --import tsx scripts/simulate.ts --redteam"
   },
   "dependencies": {
     "@guava-ai/guava-sdk": "^0.40.0",

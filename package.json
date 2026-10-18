@@ -7,6 +7,8 @@
     "dev:frontend": "npm run dev -w @coldline/frontend",
     "chat": "npm run chat -w @coldline/backend --",
     "demo:agent": "npm run demo:agent -w @coldline/backend",
+    "simulate": "npm run simulate -w @coldline/backend --",
+    "simulate:redteam": "npm run simulate:redteam -w @coldline/backend --",
     "check": "npm run check -w @coldline/backend",
     "demo:incident": "npm run demo:incident -w @coldline/backend",
     "build": "npm run build -w @coldline/frontend"

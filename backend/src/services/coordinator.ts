@@ -5,6 +5,7 @@ import {
   getFacilityResponse, listActiveIncidentsForFacility, listFacilityResponses, upsertFacilityResponse,
 } from "../database/queries/index.ts";
 import { getFacility, getPharmacy } from "../database/seed/index.ts";
+import { clockNow } from "../utils/clock.ts";
 import { bus } from "../utils/events.ts";
 import { changeIncidentStatus } from "./incidents.ts";
 
@@ -79,7 +80,7 @@ const formatCutoff = (c: number | "always") =>
   c === "always" ? "24h" : `${String(Math.floor(c / 60) % 24).padStart(2, "0")}:${String(c % 60).padStart(2, "0")}`;
 
 /** Minutes after local midnight at the facility. */
-export function localMinutes(at: Date = new Date()): number {
+export function localMinutes(at: Date = clockNow()): number {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", minute: "numeric", hourCycle: "h23" })
     .formatToParts(at);
   const get = (k: string) => parseInt(parts.find((p) => p.type === k)?.value ?? "0");
@@ -144,7 +145,7 @@ export interface CoordinatorResult {
 }
 
 export async function submitCoordinatorAnswer(
-  brief: RequestBrief, answer: CoordinatorAnswer, judge: Judge, now: Date = new Date(),
+  brief: RequestBrief, answer: CoordinatorAnswer, judge: Judge, now: Date = clockNow(),
 ): Promise<CoordinatorResult> {
   const { incident, facilityId } = brief;
   // "none" / "no other conditions" means no condition
