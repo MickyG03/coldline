@@ -10,6 +10,7 @@
 import { env } from "../utils/env.ts";
 import { agent } from "../../agents/inbound/agent.ts";
 import { startAlerts } from "../services/alerts.ts";
+import { releaseOrphanedCalls } from "../services/coordinator.ts";
 import { startGraphQL } from "./graphql.ts";
 
 const args = process.argv.slice(2);
@@ -20,7 +21,10 @@ const flag = (name: string) => {
 };
 
 const api = await startGraphQL();
-if (api) startAlerts(); // alerts belong to the process that serves the dashboard
+if (api) {
+  startAlerts(); // alerts belong to the process that serves the dashboard
+  releaseOrphanedCalls();
+}
 
 if (args.includes("--chat")) {
   const roleOverride = flag("--as") ?? env("COLDLINE_AS") ?? "pharmacy";

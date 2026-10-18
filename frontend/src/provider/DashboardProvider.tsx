@@ -3,7 +3,7 @@ import {
   DASHBOARD, DECIDE, EVENTS, OPEN_DEMO_INCIDENT, RESET, ROUTE, SIMULATE, request, subscribe,
   type BusEvent, type DemoStatus, type Incident, type Network, type Route,
 } from "../connection/index.ts";
-import { dropStaleCalls, foldCallEvent, type LiveCall } from "./liveCalls.ts";
+import { dropStaleCalls, endOpenCalls, foldCallEvent, type LiveCall } from "./liveCalls.ts";
 
 // Dashboard data: one query for everything on screen, refetched (debounced) whenever the
 // backend event bus publishes something. Actions are thin wrappers over the mutations.
@@ -45,6 +45,7 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
   const [selectedId, select] = useState<string | null>(null);
   const [route, setRoute] = useState<Route | null>(null);
   const timer = useRef<number | undefined>(undefined);
+  const wasDown = useRef(false);
 
   const load = useCallback(async () => {
     try {
@@ -72,7 +73,13 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
       refresh();
     }, (ok) => {
       setLive(ok);
-      if (ok) refresh();
+      if (!ok) wasDown.current = true;
+      if (ok) {
+        // Back after a drop (e.g. the backend restarted): nothing that was on the line survived it.
+        if (wasDown.current) setCalls((prev) => endOpenCalls(prev));
+        wasDown.current = false;
+        refresh();
+      }
     });
   }, [load, refresh]);
 

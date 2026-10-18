@@ -2,7 +2,7 @@ import { computeDriveRoute } from "../application/google/routes.ts";
 import { noulConfidence, type AnswerJudgment, type Judge } from "../application/typesafe/jev.ts";
 import type { FacilityResponse, FacilityResponseStatus, Incident } from "../database/models/index.ts";
 import {
-  getFacilityResponse, listActiveIncidentsForFacility, listFacilityResponses, upsertFacilityResponse,
+  getFacilityResponse, listActiveIncidents, listActiveIncidentsForFacility, listFacilityResponses, upsertFacilityResponse,
 } from "../database/queries/index.ts";
 import { getFacility, getPharmacy } from "../database/seed/index.ts";
 import { clockNow } from "../utils/clock.ts";
@@ -191,5 +191,19 @@ export function coordinatorClosingLine(r: CoordinatorResult): string {
       return "Thank the coordinator and let them know you have recorded that they cannot take this shipment. Say goodbye.";
     default:
       return "Thank the coordinator. Say their answer was recorded as incomplete, so a staff member may call back to clarify. Say goodbye.";
+  }
+}
+
+/**
+ * After a restart no call can still be on the line, so a facility left "calling" (the process died
+ * mid-call) goes back to "unknown". Audited like any other status change.
+ */
+export function releaseOrphanedCalls() {
+  for (const incident of listActiveIncidents()) {
+    for (const r of listFacilityResponses(incident.id)) {
+      if (r.status !== "calling") continue;
+      upsertFacilityResponse(incident.id, r.facilityId, { status: "unknown" });
+      bus.publish("facility.status_changed", { incidentId: incident.id, facilityId: r.facilityId, from: "calling", to: "unknown" });
+    }
   }
 }
