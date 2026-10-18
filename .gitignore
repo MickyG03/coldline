@@ -6,3 +6,4 @@ node_modules/
 *.db
 *.db-journal
 install-guava.ps1
+dist/

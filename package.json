@@ -1,0 +1,12 @@
+{
+  "name": "coldline",
+  "private": true,
+  "workspaces": ["backend", "frontend"],
+  "scripts": {
+    "dev:backend": "npm run dev -w @coldline/backend",
+    "dev:frontend": "npm run dev -w @coldline/frontend",
+    "chat": "npm run chat -w @coldline/backend",
+    "check": "npm run check -w @coldline/backend",
+    "build": "npm run build -w @coldline/frontend"
+  }
+}

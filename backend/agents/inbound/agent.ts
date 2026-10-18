@@ -13,7 +13,7 @@ const logger = guava.getDefaultLogger();
 
 let documentQA: DocumentQA | null = null;
 try {
-  const docs = readFileSync(new URL("./guava-docs.md", import.meta.url), "utf-8");
+  const docs = readFileSync(new URL("../../docs/guava-docs.md", import.meta.url), "utf-8");
   documentQA = new DocumentQA({ documents: docs, namespace: "guava-cli-intro" });
 } catch (exc) {
   logger.warn("Could not load Guava docs for RAG: %s", exc);
@@ -86,14 +86,6 @@ agent.onSessionEnd(async (call: guava.Call, _event) => {
   logger.info("Session ended (session: %s)", call.id);
 });
 
-// Run this to attach your agent to a phone number. Call your agent's number to talk to it.
-await agent.listenPhone("+12403691080");
-
-// Run this to talk to your agent using your local audio device.
-// await agent.callLocal();
-
-// Run this to receive a WebRTC link where you can talk to your agent in the browser.
-// await agent.listenWebrtc();
-
-// Run this to test your agent in a text-based chat session in the terminal (no audio required).
-// await agent.chat();
+// The phone channel is attached in src/server/index.ts. For local testing, use
+// agent.chat() (text), agent.callLocal() (local audio) or agent.listenWebrtc().
+export { agent };

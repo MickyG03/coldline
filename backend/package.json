@@ -1,0 +1,23 @@
+{
+  "name": "@coldline/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --import tsx src/server/index.ts",
+    "dev": "node --watch --import tsx src/server/index.ts",
+    "chat": "node --import tsx src/server/index.ts --chat",
+    "check": "node --import tsx scripts/check.ts"
+  },
+  "dependencies": {
+    "@guava-ai/guava-sdk": "^0.40.0",
+    "@typesafe-ai/sdk": "^0.7.0",
+    "graphql": "^16.11.0",
+    "graphql-yoga": "^5.24.0",
+    "tsx": "^4.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}

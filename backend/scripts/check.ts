@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import * as guava from "@guava-ai/guava-sdk";
 import { noul, TypeSafeClient } from "@typesafe-ai/sdk";
-import { env, isPhone } from "../src/env.ts";
+import { env, isPhone } from "../src/utils/env.ts";
 
 type Result = "ok" | "warn" | "fail";
 const icons: Record<Result, string> = { ok: "✅", warn: "⚠️ ", fail: "❌" };
@@ -54,8 +54,8 @@ await check("Guava", async () => {
 });
 
 await check("Google Routes", async () => {
-  const [pharmacy] = loadJson("../data/pharmacies.json");
-  const [facility] = loadJson("../data/facilities.json");
+  const [pharmacy] = loadJson("../src/database/seed/pharmacies.json");
+  const [facility] = loadJson("../src/database/seed/facilities.json");
   const point = (p: { lat: number; lng: number }) => ({
     location: { latLng: { latitude: p.lat, longitude: p.lng } },
   });

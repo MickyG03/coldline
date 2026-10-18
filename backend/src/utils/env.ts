@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-// Load .env from my-agent/ or the repo root, whichever exists first.
-for (const rel of ["../.env", "../../.env"]) {
+// Load the repo-root .env (backend/src/utils -> repo root), or backend/.env if present.
+for (const rel of ["../../.env", "../../../.env"]) {
   const path = fileURLToPath(new URL(rel, import.meta.url));
   if (existsSync(path)) {
     process.loadEnvFile(path);
