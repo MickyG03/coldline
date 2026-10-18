@@ -30,6 +30,7 @@ const Numeral = styled.span<{ $accent?: boolean }>`
 `;
 
 const Label = styled.div`
+  white-space: nowrap;
   font-size: ${({ theme }) => theme.fonts.size.sm};
   color: ${({ theme }) => theme.palette.textPrimary};
   & small {
@@ -42,10 +43,11 @@ const Label = styled.div`
 `;
 
 const Actions = styled.div`
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: ${({ theme }) => theme.sizes.space.xxl};
+  gap: ${({ theme }) => theme.sizes.space.xl};
 `;
 
 const Place = styled.div`
@@ -54,8 +56,11 @@ const Place = styled.div`
   align-items: center;
   color: ${({ theme }) => theme.palette.textSecondary};
   font-size: ${({ theme }) => theme.fonts.size.sm};
+  min-width: 0;
   white-space: nowrap;
-  & small { display: block; font-size: ${({ theme }) => theme.fonts.size.xs}; color: ${({ theme }) => theme.palette.textMuted}; }
+  & > div { min-width: 0; }
+  @media (max-width: 1400px) { display: none; }
+  & small { display: block; overflow: hidden; text-overflow: ellipsis; font-size: ${({ theme }) => theme.fonts.size.xs}; color: ${({ theme }) => theme.palette.textMuted}; }
 `;
 
 const two = (n: number) => String(n).padStart(2, "0");
@@ -80,7 +85,7 @@ export function StatsRow({ network, onNewRequest, busy }: { network: Network | n
           <Icon name="pin" size="md" />
           <div>
             Los Angeles
-            <small>Regional care network{network ? ` · ${network.pharmacy.name}` : ""}</small>
+            <small>Regional care network</small>
           </div>
         </Place>
         <Button $variant="soft" onClick={onNewRequest} disabled={busy}>
