@@ -22,6 +22,8 @@ const toIncident = (r: Row): Incident => ({
   currentTempC: r.current_temp_c,
   minutesSinceFailure: r.minutes_since_failure,
   urgency: r.urgency,
+  excursionOccurred: r.excursion_occurred == null ? null : !!r.excursion_occurred,
+  triage: parse<JevLabels>(r.triage),
   status: r.status,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
@@ -38,6 +40,7 @@ const toResponse = (r: Row): FacilityResponse => ({
   receivingUntil: r.receiving_until,
   conditions: r.conditions,
   respondedAt: r.responded_at,
+  driveMinutes: r.drive_minutes ?? null,
   updatedAt: r.updated_at,
 });
 
@@ -60,6 +63,8 @@ export interface NewIncident {
   currentTempC?: number | null;
   minutesSinceFailure?: number | null;
   urgency: Urgency;
+  excursionOccurred?: boolean | null;
+  triage?: JevLabels | null;
 }
 
 export function insertIncident(input: NewIncident): Incident {
@@ -67,12 +72,13 @@ export function insertIncident(input: NewIncident): Incident {
   const id = randomUUID();
   getDb().prepare(
     `INSERT INTO incidents (id, pharmacy_id, products, total_units, storage_type, current_temp_c,
-       minutes_since_failure, urgency, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
+       minutes_since_failure, urgency, excursion_occurred, triage, status, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
   ).run(
     id, input.pharmacyId, JSON.stringify(input.products),
     input.products.reduce((n, p) => n + p.units, 0), input.storageType,
-    input.currentTempC ?? null, input.minutesSinceFailure ?? null, input.urgency, ts, ts,
+    input.currentTempC ?? null, input.minutesSinceFailure ?? null, input.urgency,
+    input.excursionOccurred == null ? null : Number(input.excursionOccurred), json(input.triage), ts, ts,
   );
   return getIncident(id)!;
 }
@@ -84,6 +90,22 @@ export function getIncident(id: string): Incident | undefined {
 
 export function listIncidents(): Incident[] {
   return getDb().prepare("SELECT * FROM incidents ORDER BY created_at DESC").all().map(toIncident);
+}
+
+const ACTIVE = "('open','matching','awaiting_responses','recommended')";
+
+/** Most recent still-active incidents (not yet approved/rejected/closed). */
+export function listActiveIncidents(): Incident[] {
+  return getDb().prepare(`SELECT * FROM incidents WHERE status IN ${ACTIVE} ORDER BY created_at DESC`)
+    .all().map(toIncident);
+}
+
+/** Active incidents that have a response row (i.e. were matched) for this facility. */
+export function listActiveIncidentsForFacility(facilityId: string): Incident[] {
+  return getDb().prepare(
+    `SELECT i.* FROM incidents i JOIN facility_responses r ON r.incident_id = i.id
+     WHERE r.facility_id = ? AND i.status IN ${ACTIVE} ORDER BY i.created_at DESC`,
+  ).all(facilityId).map(toIncident);
 }
 
 export type IncidentPatch = Partial<Pick<Incident, "status" | "currentTempC" | "minutesSinceFailure" | "urgency">>;
@@ -117,13 +139,14 @@ export interface ResponsePatch {
   receivingUntil?: string | null;
   conditions?: string | null;
   respondedAt?: string | null;
+  driveMinutes?: number | null;
 }
 
 export function upsertFacilityResponse(incidentId: string, facilityId: string, p: ResponsePatch): FacilityResponse {
   getDb().prepare(
     `INSERT INTO facility_responses (id, incident_id, facility_id, status, raw_text, jev_labels,
-       reported_capacity, receiving_until, conditions, responded_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       reported_capacity, receiving_until, conditions, responded_at, drive_minutes, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (incident_id, facility_id) DO UPDATE SET
        status = excluded.status,
        raw_text = COALESCE(excluded.raw_text, raw_text),
@@ -132,10 +155,12 @@ export function upsertFacilityResponse(incidentId: string, facilityId: string, p
        receiving_until = COALESCE(excluded.receiving_until, receiving_until),
        conditions = COALESCE(excluded.conditions, conditions),
        responded_at = COALESCE(excluded.responded_at, responded_at),
+       drive_minutes = COALESCE(excluded.drive_minutes, drive_minutes),
        updated_at = excluded.updated_at`,
   ).run(
     randomUUID(), incidentId, facilityId, p.status, p.rawText ?? null, json(p.jevLabels),
-    p.reportedCapacity ?? null, p.receivingUntil ?? null, p.conditions ?? null, p.respondedAt ?? null, now(),
+    p.reportedCapacity ?? null, p.receivingUntil ?? null, p.conditions ?? null, p.respondedAt ?? null,
+    p.driveMinutes ?? null, now(),
   );
   return getFacilityResponse(incidentId, facilityId)!;
 }

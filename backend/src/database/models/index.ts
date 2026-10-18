@@ -22,6 +22,10 @@ export interface Incident {
   currentTempC: number | null;
   minutesSinceFailure: number | null;
   urgency: Urgency;
+  /** Jev triage: did the product leave its labeled storage range? null = not triaged. */
+  excursionOccurred: boolean | null;
+  /** Jev triage labels (storage type / urgency / excursion probabilities). */
+  triage: JevLabels | null;
   status: IncidentStatus;
   createdAt: string;
   updatedAt: string;
@@ -41,6 +45,8 @@ export interface FacilityResponse {
   receivingUntil: string | null;
   conditions: string | null;
   respondedAt: string | null;
+  /** Drive time from the pharmacy (Google Routes), set when the facility is matched. */
+  driveMinutes: number | null;
   updatedAt: string;
 }
 
@@ -72,6 +78,8 @@ CREATE TABLE IF NOT EXISTS incidents (
   current_temp_c REAL,
   minutes_since_failure INTEGER,
   urgency TEXT NOT NULL CHECK (urgency IN ('low','medium','high','critical')),
+  excursion_occurred INTEGER,
+  triage TEXT,
   status TEXT NOT NULL CHECK (status IN ('open','matching','awaiting_responses','recommended','approved','rejected','closed')),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -88,6 +96,7 @@ CREATE TABLE IF NOT EXISTS facility_responses (
   receiving_until TEXT,
   conditions TEXT,
   responded_at TEXT,
+  drive_minutes INTEGER,
   updated_at TEXT NOT NULL,
   UNIQUE (incident_id, facility_id)
 );
@@ -113,3 +122,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE INDEX IF NOT EXISTS idx_responses_incident ON facility_responses(incident_id);
 CREATE INDEX IF NOT EXISTS idx_audit_incident ON audit_log(incident_id);
 `;
+
+/** Columns added after the first release; applied to existing databases by getDb(). */
+export const MIGRATIONS: { table: string; column: string; ddl: string }[] = [
+  { table: "incidents", column: "excursion_occurred", ddl: "ALTER TABLE incidents ADD COLUMN excursion_occurred INTEGER" },
+  { table: "incidents", column: "triage", ddl: "ALTER TABLE incidents ADD COLUMN triage TEXT" },
+  { table: "facility_responses", column: "drive_minutes", ddl: "ALTER TABLE facility_responses ADD COLUMN drive_minutes INTEGER" },
+];

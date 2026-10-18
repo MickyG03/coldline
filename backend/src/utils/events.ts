@@ -20,6 +20,9 @@ export interface EventMap {
     to: FacilityResponseStatus;
   };
   "decision.made": { decision: Decision };
+  /** Inbound call identified by caller ID (or a chat-mode override). incidentId is null until known. */
+  "caller.routed": { incidentId: string | null; callId: string; role: string; facilityId?: string; via: "caller_id" | "override" };
+  "caller.refused": { incidentId: null; callId: string; fromNumber: string | null; reason: string };
 }
 
 export type EventType = keyof EventMap;
