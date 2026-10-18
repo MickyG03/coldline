@@ -55,7 +55,7 @@ function Dashboard() {
 
   return (
     <AppShell
-      title="Network overview"
+      heading={<Hero />}
       nav={[
         { icon: "map", label: "Network map", active: true, onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }) },
         { icon: "grid", label: "Facilities", onClick: () => scrollTo("within-reach") },
@@ -67,8 +67,7 @@ function Dashboard() {
       ]}
     >
       <Content>
-        <Hero network={data?.network ?? null} onNewRequest={newRequest} busy={busy === "new"} />
-        <StatsRow network={data?.network ?? null} />
+        <StatsRow network={data?.network ?? null} onNewRequest={newRequest} busy={busy === "new"} />
         <DemoToolbar demo={data?.demo ?? null} hasIncident={!!incident && !["approved", "closed"].includes(incident.status)}
           busy={busy} live={live} error={error} onSimulate={simulate} onReset={reset} />
         <LiveCallBanner calls={calls} />

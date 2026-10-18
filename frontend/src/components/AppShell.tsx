@@ -70,28 +70,15 @@ const Divider = styled.span`
   background: ${({ theme }) => theme.palette.border};
 `;
 
-const Crumb = styled.span`
-  font-size: ${({ theme }) => theme.fonts.size.sm};
-  color: ${({ theme }) => theme.palette.textSecondary};
-`;
-
-const Workspace = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.sizes.space.sm};
-  margin-left: auto;
-  font-size: ${({ theme }) => theme.fonts.size.sm};
-  color: ${({ theme }) => theme.palette.textSecondary};
-  &::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: ${({ theme }) => theme.border.radius.pill};
-    background: ${({ theme }) => theme.palette.statusConfirmed};
-  }
+const Heading = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: ${({ theme }) => theme.sizes.space.lg};
+  min-width: 0;
 `;
 
 const Avatar = styled.span`
+  margin-left: auto;
   display: grid;
   place-items: center;
   width: 44px;
@@ -105,10 +92,11 @@ const Avatar = styled.span`
 
 export interface RailItem { icon: IconName; label: string; active?: boolean; onClick?: () => void }
 
-export function AppShell({ nav, footer, title, children }: {
+export function AppShell({ nav, footer, heading, children }: {
   nav: RailItem[];
   footer: RailItem[];
-  title: string;
+  /** Shown beside the wordmark. */
+  heading?: ReactNode;
   children: ReactNode;
 }) {
   const item = (i: RailItem) => (
@@ -128,8 +116,7 @@ export function AppShell({ nav, footer, title, children }: {
         <TopBar>
           <Wordmark src="/assets/wordmark.svg" alt="coldline" />
           <Divider />
-          <Crumb>{title}</Crumb>
-          <Workspace>Demo workspace</Workspace>
+          {heading && <Heading>{heading}</Heading>}
           <Avatar>MG</Avatar>
         </TopBar>
         {children}

@@ -1,4 +1,6 @@
 import styled from "styled-components";
+import { Button } from "../../components/Button.tsx";
+import { Icon } from "../../components/Icon.tsx";
 import { StatusDot } from "../../components/StatusDot.tsx";
 import type { Network } from "../../connection/index.ts";
 
@@ -14,8 +16,8 @@ const Stat = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.sizes.space.lg};
-  padding-right: ${({ theme }) => theme.sizes.space.xxxl};
-  margin-right: ${({ theme }) => theme.sizes.space.xxxl};
+  padding-right: ${({ theme }) => theme.sizes.space.xxl};
+  margin-right: ${({ theme }) => theme.sizes.space.xxl};
   border-right: ${({ theme }) => theme.border.stroke.thin} solid ${({ theme }) => theme.palette.border};
 `;
 
@@ -39,29 +41,26 @@ const Label = styled.div`
   }
 `;
 
-const Tagline = styled.div`
+const Actions = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: ${({ theme }) => theme.sizes.space.lg};
-  font-size: ${({ theme }) => theme.fonts.size.xs};
-  color: ${({ theme }) => theme.palette.textMuted};
-  & svg { stroke: ${({ theme }) => theme.palette.borderStrong}; fill: none; }
+  gap: ${({ theme }) => theme.sizes.space.xxl};
+`;
+
+const Place = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.sizes.space.md};
+  align-items: center;
+  color: ${({ theme }) => theme.palette.textSecondary};
+  font-size: ${({ theme }) => theme.fonts.size.sm};
+  white-space: nowrap;
+  & small { display: block; font-size: ${({ theme }) => theme.fonts.size.xs}; color: ${({ theme }) => theme.palette.textMuted}; }
 `;
 
 const two = (n: number) => String(n).padStart(2, "0");
 
-/** Small branching-line illustration next to the tagline. */
-function Branches() {
-  return (
-    <svg width="110" height="52" viewBox="0 0 110 52" aria-hidden>
-      <path d="M0 26h38c10 0 12-16 24-16h30M38 26c10 0 12 14 24 14h30M58 26h34M70 10V4" />
-      <circle cx="94" cy="10" r="3" /><circle cx="94" cy="26" r="3" /><circle cx="94" cy="40" r="3" /><circle cx="70" cy="3" r="2" />
-    </svg>
-  );
-}
-
-export function StatsRow({ network }: { network: Network | null }) {
+export function StatsRow({ network, onNewRequest, busy }: { network: Network | null; onNewRequest: () => void; busy: boolean }) {
   return (
     <Row>
       <Stat>
@@ -76,10 +75,18 @@ export function StatsRow({ network }: { network: Network | null }) {
         <Numeral>{network?.nearestBackupMinutes ?? "—"}<small> min</small></Numeral>
         <Label>Nearest backup<small>Google Routes drive time</small></Label>
       </Stat>
-      <Tagline>
-        <Branches />
-        <span>Small connections.<br />A stronger whole.</span>
-      </Tagline>
+      <Actions>
+        <Place>
+          <Icon name="pin" size="md" />
+          <div>
+            Los Angeles
+            <small>Regional care network{network ? ` · ${network.pharmacy.name}` : ""}</small>
+          </div>
+        </Place>
+        <Button $variant="soft" onClick={onNewRequest} disabled={busy}>
+          <Icon name="plus" size="md" /> {busy ? "Opening request…" : "New request"}
+        </Button>
+      </Actions>
     </Row>
   );
 }
