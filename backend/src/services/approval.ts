@@ -29,11 +29,16 @@ export function rankOptions(responses: FacilityResponse[]): ApprovalOption[] {
     .map((o, i) => ({ ...o, rank: i + 1 }));
 }
 
+/** Options still open for an incident: ranked confirmed/conditional sites staff have not rejected. */
+export function viableOptions(incidentId: string): ApprovalOption[] {
+  const rejected = new Set(listDecisions(incidentId).filter((d) => d.decision === "rejected").map((d) => d.facilityId));
+  return rankOptions(listFacilityResponses(incidentId).filter((r) => !rejected.has(r.facilityId)));
+}
+
 /** The incident staff should decide on now: newest active one with responses awaiting review. */
 export function findIncidentForApproval(): { incident: Incident; options: ApprovalOption[] } | undefined {
   for (const incident of listActiveIncidents()) {
-    const rejected = new Set(listDecisions(incident.id).filter((d) => d.decision === "rejected").map((d) => d.facilityId));
-    const options = rankOptions(listFacilityResponses(incident.id).filter((r) => !rejected.has(r.facilityId)));
+    const options = viableOptions(incident.id);
     if (options.length) return { incident, options };
   }
   const incident = listActiveIncidents()[0];

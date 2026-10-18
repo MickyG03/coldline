@@ -139,7 +139,7 @@ export interface ResponderResult extends PersonaRun {
 
 export function checkResponse(persona: Persona, response: FacilityResponse | undefined): string[] {
   const problems: string[] = [];
-  if (!response || response.status === "unknown") return ["no answer was recorded for this facility"];
+  if (!response || response.status === "unknown" || response.status === "calling") return ["no answer was recorded for this facility"];
   if (persona.expect && !persona.expect.includes(response.status)) {
     problems.push(`status ${response.status}, expected ${persona.expect.join(" or ")}`);
   }
@@ -151,7 +151,7 @@ export function checkResponse(persona: Persona, response: FacilityResponse | und
 async function awaitResponse(incidentId: string, facilityId: string, ms = 30_000): Promise<FacilityResponse | undefined> {
   const done = () => {
     const r = getFacilityResponse(incidentId, facilityId);
-    return r && r.status !== "unknown" ? r : undefined;
+    return r && r.status !== "unknown" && r.status !== "calling" ? r : undefined;
   };
   if (done()) return done();
   await new Promise<void>((resolve) => {

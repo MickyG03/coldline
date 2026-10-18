@@ -4,11 +4,15 @@
     "name": "Arts District Clinic Cold Room",
     "synthetic": true,
     "address": "Arts District, Los Angeles, CA",
+    "neighborhood": "Arts District",
     "lat": 34.0403,
     "lng": -118.2321,
     "coordinator": "Facility A coordinator",
     "phoneEnv": "FACILITY_A_PHONE",
-    "capacityUnits": { "refrigerated": 400, "frozen": 0 },
+    "capacityUnits": {
+      "refrigerated": 400,
+      "frozen": 0
+    },
     "receivingHours": "08:00-18:00"
   },
   {
@@ -16,11 +20,15 @@
     "name": "Westlake Health Center",
     "synthetic": true,
     "address": "Westlake, Los Angeles, CA",
+    "neighborhood": "Westlake",
     "lat": 34.0577,
     "lng": -118.277,
     "coordinator": "Facility B coordinator",
     "phoneEnv": "FACILITY_B_PHONE",
-    "capacityUnits": { "refrigerated": 250, "frozen": 150 },
+    "capacityUnits": {
+      "refrigerated": 250,
+      "frozen": 150
+    },
     "receivingHours": "07:00-22:00"
   },
   {
@@ -28,11 +36,96 @@
     "name": "Glendale Community Vaccine Depot",
     "synthetic": true,
     "address": "Glendale, CA",
+    "neighborhood": "Glendale",
     "lat": 34.1425,
     "lng": -118.2551,
     "coordinator": "Facility C coordinator",
     "phoneEnv": "FACILITY_C_PHONE",
-    "capacityUnits": { "refrigerated": 800, "frozen": 300 },
+    "capacityUnits": {
+      "refrigerated": 800,
+      "frozen": 300
+    },
     "receivingHours": "24h"
+  },
+  {
+    "id": "silverleaf-medical",
+    "name": "Silverleaf Medical",
+    "synthetic": true,
+    "address": "Silver Lake, Los Angeles, CA",
+    "neighborhood": "Silver Lake",
+    "lat": 34.0869,
+    "lng": -118.2702,
+    "coordinator": "Facility D coordinator",
+    "phoneEnv": "FACILITY_D_PHONE",
+    "capacityUnits": {
+      "refrigerated": 500,
+      "frozen": 200
+    },
+    "receivingHours": "07:00-21:00"
+  },
+  {
+    "id": "highland-medical",
+    "name": "Highland Medical",
+    "synthetic": true,
+    "address": "East Hollywood, Los Angeles, CA",
+    "neighborhood": "East Hollywood",
+    "lat": 34.0907,
+    "lng": -118.2925,
+    "coordinator": "Facility E coordinator",
+    "phoneEnv": "FACILITY_E_PHONE",
+    "capacityUnits": {
+      "refrigerated": 300,
+      "frozen": 0
+    },
+    "receivingHours": "08:00-20:00"
+  },
+  {
+    "id": "juniper-health",
+    "name": "Juniper Health",
+    "synthetic": true,
+    "address": "Echo Park, Los Angeles, CA",
+    "neighborhood": "Echo Park",
+    "lat": 34.0782,
+    "lng": -118.2606,
+    "coordinator": "Facility F coordinator",
+    "phoneEnv": "FACILITY_F_PHONE",
+    "capacityUnits": {
+      "refrigerated": 150,
+      "frozen": 60
+    },
+    "receivingHours": "09:00-17:00"
+  },
+  {
+    "id": "rosewood-care",
+    "name": "Rosewood Care Center",
+    "synthetic": true,
+    "address": "Mid-Wilshire, Los Angeles, CA",
+    "neighborhood": "Mid-Wilshire",
+    "lat": 34.0625,
+    "lng": -118.3436,
+    "coordinator": "Facility G coordinator",
+    "phoneEnv": "FACILITY_G_PHONE",
+    "capacityUnits": {
+      "refrigerated": 220,
+      "frozen": 0
+    },
+    "receivingHours": "24h"
+  },
+  {
+    "id": "hollen-clinical-lab",
+    "name": "Hollen Clinical Lab",
+    "synthetic": true,
+    "address": "Boyle Heights, Los Angeles, CA",
+    "neighborhood": "Boyle Heights",
+    "lat": 34.033,
+    "lng": -118.205,
+    "coordinator": "Facility H coordinator",
+    "phoneEnv": "FACILITY_H_PHONE",
+    "capacityUnits": {
+      "refrigerated": 120,
+      "frozen": 400,
+      "ultra-cold": 200
+    },
+    "receivingHours": "06:00-18:00"
   }
 ]

@@ -23,6 +23,21 @@ export interface EventMap {
   /** Inbound call identified by caller ID (or a chat-mode override). incidentId is null until known. */
   "caller.routed": { incidentId: string | null; callId: string; role: string; facilityId?: string; via: "caller_id" | "override" };
   "caller.refused": { incidentId: null; callId: string; fromNumber: string | null; reason: string };
+  /** One spoken turn on a call (simulated callers today), for the dashboard's live transcript. */
+  "transcript.line": { incidentId: string | null; facilityId?: string; caller: string; speaker: "agent" | "caller"; text: string };
+  /** Dashboard demo runner started/stopped. */
+  "demo.status": { incidentId: string | null; simulating: boolean; redteam: boolean; error: string | null };
+  /** SMS alert outcome. "simulated" = SMS off or no valid number; nothing was texted. */
+  "alert.sent": {
+    incidentId: string | null;
+    kind: "coordinator_request" | "staff_recommendation";
+    recipient: string;
+    facilityId?: string;
+    to: string | null;
+    message: string;
+    status: "sent" | "simulated" | "failed";
+    detail?: string;
+  };
 }
 
 export type EventType = keyof EventMap;

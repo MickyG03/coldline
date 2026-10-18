@@ -1,4 +1,4 @@
-// Spacing scale used for padding, gaps and margins.
+// Spacing scale used for padding, gaps and margins, plus fixed layout dimensions.
 export const sizes = {
   space: {
     none: "0",
@@ -10,5 +10,12 @@ export const sizes = {
     xl: "24px",
     xxl: "32px",
     xxxl: "48px",
+  },
+  layout: {
+    rail: "104px",
+    topBar: "96px",
+    sidePanel: "384px",
+    map: "620px",
+    content: "1600px",
   },
 } as const;

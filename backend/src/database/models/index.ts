@@ -47,6 +47,8 @@ export interface FacilityResponse {
   respondedAt: string | null;
   /** Drive time from the pharmacy (Google Routes), set when the facility is matched. */
   driveMinutes: number | null;
+  /** Drive distance from the pharmacy in km (Google Routes). */
+  driveKm: number | null;
   updatedAt: string;
 }
 
@@ -97,6 +99,7 @@ CREATE TABLE IF NOT EXISTS facility_responses (
   conditions TEXT,
   responded_at TEXT,
   drive_minutes INTEGER,
+  drive_km REAL,
   updated_at TEXT NOT NULL,
   UNIQUE (incident_id, facility_id)
 );
@@ -128,4 +131,5 @@ export const MIGRATIONS: { table: string; column: string; ddl: string }[] = [
   { table: "incidents", column: "excursion_occurred", ddl: "ALTER TABLE incidents ADD COLUMN excursion_occurred INTEGER" },
   { table: "incidents", column: "triage", ddl: "ALTER TABLE incidents ADD COLUMN triage TEXT" },
   { table: "facility_responses", column: "drive_minutes", ddl: "ALTER TABLE facility_responses ADD COLUMN drive_minutes INTEGER" },
+  { table: "facility_responses", column: "drive_km", ddl: "ALTER TABLE facility_responses ADD COLUMN drive_km REAL" },
 ];

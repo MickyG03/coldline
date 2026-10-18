@@ -81,7 +81,7 @@ export async function submitIntake(input: IntakeInput, judge: Judge): Promise<In
   changeIncidentStatus(incident.id, "matching");
   const match = await matchFacilities(incident);
   for (const c of match.candidates) {
-    const response = upsertFacilityResponse(incident.id, c.facility.id, { status: "unknown", driveMinutes: c.driveMinutes });
+    const response = upsertFacilityResponse(incident.id, c.facility.id, { status: "unknown", driveMinutes: c.driveMinutes, driveKm: c.driveKm });
     bus.publish("facility.status_changed", { incidentId: incident.id, facilityId: c.facility.id, from: null, to: response.status });
   }
   const final = changeIncidentStatus(incident.id, "awaiting_responses");

@@ -22,6 +22,7 @@ import { intakeClosingLine, submitIntake } from "../../src/services/intake.ts";
 import { parseRoleOverride, resolveCaller, type CallerRole } from "../../src/services/routing.ts";
 import { bus } from "../../src/utils/events.ts";
 import type { Incident } from "../../src/database/models/index.ts";
+import { getFacilityResponse, upsertFacilityResponse } from "../../src/database/queries/index.ts";
 
 const logger = guava.getDefaultLogger();
 
@@ -149,6 +150,7 @@ async function startCoordinator(call: guava.Call, facilityId: string) {
     return;
   }
   calls.get(call.id)!.brief = brief;
+  markCalling(call.id, brief, true);
   await call.setTask({
     taskId: "coordinator_response",
     objective:
@@ -179,6 +181,18 @@ async function startCoordinator(call: guava.Call, facilityId: string) {
       }),
     ],
   });
+}
+
+/** Show the facility as "on the line" while the coordinator is talking; back to unknown if they hang up silent. */
+function markCalling(callId: string, brief: RequestBrief, on: boolean) {
+  const { incident, facilityId } = brief;
+  const before = getFacilityResponse(incident.id, facilityId)?.status ?? null;
+  const to = on ? "calling" : "unknown";
+  if (on && before !== "unknown" && before !== null) return; // already answered: keep the recorded status
+  if (!on && before !== "calling") return;
+  upsertFacilityResponse(incident.id, facilityId, { status: to });
+  if (on) bus.publish("call.started", { incidentId: incident.id, facilityId, callId, direction: "inbound" });
+  bus.publish("facility.status_changed", { incidentId: incident.id, facilityId, from: before, to });
 }
 
 /** Judge and store what the coordinator said. `partial` = the call ended before the task completed. */
@@ -279,6 +293,7 @@ agent.onSessionEnd(async (call) => {
       logger.error("Saving partial coordinator answer failed: %s", err);
     }
   }
+  if (state?.brief) markCalling(call.id, state.brief, false);
 });
 
 export { agent };

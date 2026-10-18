@@ -41,6 +41,7 @@ const toResponse = (r: Row): FacilityResponse => ({
   conditions: r.conditions,
   respondedAt: r.responded_at,
   driveMinutes: r.drive_minutes ?? null,
+  driveKm: r.drive_km ?? null,
   updatedAt: r.updated_at,
 });
 
@@ -81,6 +82,12 @@ export function insertIncident(input: NewIncident): Incident {
     input.excursionOccurred == null ? null : Number(input.excursionOccurred), json(input.triage), ts, ts,
   );
   return getIncident(id)!;
+}
+
+/** Short human-readable reference, e.g. CL-1024 (from the row id, stable per database). */
+export function incidentCode(id: string): string {
+  const row = getDb().prepare("SELECT rowid AS n FROM incidents WHERE id = ?").get(id) as { n: number } | undefined;
+  return row ? `CL-${1023 + row.n}` : "CL-????";
 }
 
 export function getIncident(id: string): Incident | undefined {
@@ -140,13 +147,14 @@ export interface ResponsePatch {
   conditions?: string | null;
   respondedAt?: string | null;
   driveMinutes?: number | null;
+  driveKm?: number | null;
 }
 
 export function upsertFacilityResponse(incidentId: string, facilityId: string, p: ResponsePatch): FacilityResponse {
   getDb().prepare(
     `INSERT INTO facility_responses (id, incident_id, facility_id, status, raw_text, jev_labels,
-       reported_capacity, receiving_until, conditions, responded_at, drive_minutes, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       reported_capacity, receiving_until, conditions, responded_at, drive_minutes, drive_km, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (incident_id, facility_id) DO UPDATE SET
        status = excluded.status,
        raw_text = COALESCE(excluded.raw_text, raw_text),
@@ -156,11 +164,12 @@ export function upsertFacilityResponse(incidentId: string, facilityId: string, p
        conditions = COALESCE(excluded.conditions, conditions),
        responded_at = COALESCE(excluded.responded_at, responded_at),
        drive_minutes = COALESCE(excluded.drive_minutes, drive_minutes),
+       drive_km = COALESCE(excluded.drive_km, drive_km),
        updated_at = excluded.updated_at`,
   ).run(
     randomUUID(), incidentId, facilityId, p.status, p.rawText ?? null, json(p.jevLabels),
     p.reportedCapacity ?? null, p.receivingUntil ?? null, p.conditions ?? null, p.respondedAt ?? null,
-    p.driveMinutes ?? null, now(),
+    p.driveMinutes ?? null, p.driveKm ?? null, now(),
   );
   return getFacilityResponse(incidentId, facilityId)!;
 }
@@ -208,10 +217,11 @@ export function insertAudit(incidentId: string | null, eventType: string, payloa
   return { id: Number(res.lastInsertRowid), incidentId, eventType, payload, createdAt: ts };
 }
 
-export function listAudit(incidentId?: string): AuditLogEntry[] {
-  const rows = incidentId
-    ? getDb().prepare("SELECT * FROM audit_log WHERE incident_id = ? ORDER BY id").all(incidentId)
-    : getDb().prepare("SELECT * FROM audit_log ORDER BY id").all();
+export function listAudit(incidentId?: string, types?: string[]): AuditLogEntry[] {
+  const where = [incidentId ? "incident_id = ?" : null, types?.length ? `event_type IN (${types.map(() => "?").join(", ")})` : null]
+    .filter(Boolean);
+  const rows = getDb().prepare(`SELECT * FROM audit_log ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY id`)
+    .all(...[incidentId, ...(types ?? [])].filter((v): v is string => !!v));
   return rows.map((r: Row) => ({
     id: r.id,
     incidentId: r.incident_id,

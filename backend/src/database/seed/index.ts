@@ -7,6 +7,7 @@ export interface Pharmacy {
   name: string;
   synthetic: boolean;
   address: string;
+  neighborhood?: string;
   lat: number;
   lng: number;
   phoneEnv: string;
@@ -19,6 +20,7 @@ export interface Facility {
   name: string;
   synthetic: boolean;
   address: string;
+  neighborhood?: string;
   lat: number;
   lng: number;
   coordinator: string;
@@ -37,3 +39,6 @@ export const getPharmacies = () => (pharmacies ??= load<Pharmacy>("./pharmacies.
 export const getFacilities = () => (facilities ??= load<Facility>("./facilities.json"));
 export const getPharmacy = (id: string) => getPharmacies().find((p) => p.id === id);
 export const getFacility = (id: string) => getFacilities().find((f) => f.id === id);
+
+/** Display neighborhood: the seed field, else the first part of the address. */
+export const neighborhoodOf = (p: { neighborhood?: string; address: string }) => p.neighborhood ?? p.address.split(",")[0].trim();

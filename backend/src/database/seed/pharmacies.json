@@ -7,7 +7,20 @@
     "lat": 34.0407,
     "lng": -118.2096,
     "phoneEnv": "PHARMACY_PHONE",
-    "responsibleStaff": { "name": "Pharmacist on duty", "phoneEnv": "STAFF_PHONE" },
-    "backupFacilityIds": ["arts-district-clinic", "westlake-health", "glendale-depot"]
+    "responsibleStaff": {
+      "name": "Pharmacist on duty",
+      "phoneEnv": "STAFF_PHONE"
+    },
+    "backupFacilityIds": [
+      "arts-district-clinic",
+      "westlake-health",
+      "glendale-depot",
+      "silverleaf-medical",
+      "highland-medical",
+      "juniper-health",
+      "rosewood-care",
+      "hollen-clinical-lab"
+    ],
+    "neighborhood": "Boyle Heights"
   }
 ]
