@@ -7,6 +7,7 @@
     "dev:frontend": "npm run dev -w @coldline/frontend",
     "chat": "npm run chat -w @coldline/backend",
     "check": "npm run check -w @coldline/backend",
+    "demo:incident": "npm run demo:incident -w @coldline/backend",
     "build": "npm run build -w @coldline/frontend"
   }
 }
