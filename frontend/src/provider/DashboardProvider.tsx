@@ -68,7 +68,8 @@ export function DashboardProvider({ incidentId, children }: { incidentId?: strin
     void load();
     return subscribe<{ events: BusEvent }>(EVENTS, {}, ({ events: e }) => {
       setCalls((prev) => foldCallEvent(prev, e));
-      if (e.type === "transcript.line" && (e.payload as { callId?: string }).callId) return; // no refetch per spoken turn
+      // A real call's turn before its request exists has nothing to refetch; it shows from `calls`.
+      if (e.type === "transcript.line" && (e.payload as { callId?: string }).callId && !e.incidentId) return;
       setEvents((prev) => [e, ...prev].slice(0, 60));
       refresh();
     }, (ok) => {

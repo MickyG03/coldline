@@ -306,10 +306,45 @@ function liveLine(call: guava.Call, speaker: "agent" | "caller", text: string) {
 
 const incidentOf = (state: CallState) => state.incidentId ?? state.brief?.incident.id ?? state.approval?.incident.id ?? null;
 
-agent.onCallerSpeech(async (call, event) => liveLine(call, "caller", event.utterance));
-agent.onAgentSpeech(async (call, event) => liveLine(call, "agent", event.utterance));
+// Speech recognition can report a caller turn more than once (a rough pass, then a corrected one).
+// Hold each caller line briefly and publish only the latest version, so the transcript reads cleanly.
+const CALLER_SETTLE_MS = 1200;
+const pendingCaller = new Map<string, { id?: string; text: string; timer: NodeJS.Timeout; call: guava.Call }>();
+
+const norm = (t: string) => t.toLowerCase().replace(/(uh|um|er|ah)/g, "").replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+const sameTurn = (a: string, b: string) => {
+  const [x, y] = [norm(a), norm(b)];
+  const head = (t: string) => t.slice(0, 24);
+  return !!x && !!y && (x.includes(head(y)) || y.includes(head(x)));
+};
+
+function flushCaller(callId: string) {
+  const p = pendingCaller.get(callId);
+  if (!p) return;
+  clearTimeout(p.timer);
+  pendingCaller.delete(callId);
+  liveLine(p.call, "caller", p.text);
+}
+
+function holdCaller(call: guava.Call, text: string, utteranceId?: string) {
+  const prev = pendingCaller.get(call.id);
+  const replaces = prev && ((utteranceId && prev.id === utteranceId) || sameTurn(prev.text, text));
+  if (prev && !replaces) flushCaller(call.id);
+  if (prev) clearTimeout(prev.timer);
+  const latest = replaces && prev && prev.text.length > text.length && !utteranceId ? prev.text : text;
+  pendingCaller.set(call.id, {
+    id: utteranceId, text: latest, call, timer: setTimeout(() => flushCaller(call.id), CALLER_SETTLE_MS),
+  });
+}
+
+agent.onCallerSpeech(async (call, event) => holdCaller(call, event.utterance, event.utterance_id));
+agent.onAgentSpeech(async (call, event) => {
+  flushCaller(call.id); // the caller's turn is over once the agent answers
+  liveLine(call, "agent", event.utterance);
+});
 
 agent.onSessionEnd(async (call, event) => {
+  flushCaller(call.id);
   const state = calls.get(call.id);
   calls.delete(call.id);
   if (state && state.role.role !== "unknown") {

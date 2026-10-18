@@ -6,6 +6,7 @@ import { StatusDot } from "../../components/StatusDot.tsx";
 import { useSpeakingWave, Waveform } from "../../components/Waveform.tsx";
 import { Mono, Muted, Overline, SectionTitle } from "../../components/Text.tsx";
 import type { Alert, BusEvent, Incident } from "../../connection/index.ts";
+import type { LiveCall } from "../../provider/liveCalls.ts";
 import { fmtTime } from "../status.ts";
 
 // Below the map: live call transcript, the SMS pager, and the raw audit/event feed.
@@ -74,9 +75,13 @@ const Empty = styled(Muted)`
 
 const ALERT_DOT = { sent: "confirmed", simulated: "unknown", failed: "unavailable" } as const;
 
-function Transcript({ incident, live }: { incident: Incident | null; live: boolean }) {
+function Transcript({ incident, live, calls }: { incident: Incident | null; live: boolean; calls: LiveCall[] }) {
   const body = useRef<HTMLDivElement>(null);
-  const lines = incident?.transcript ?? [];
+  // Saved lines for the request on screen, then any pharmacy call still on the line: its request
+  // doesn't exist until intake finishes, so its turns live only in the call stream until then.
+  const intake = calls.filter((c) => c.role === "pharmacy" && !c.endedAt)
+    .flatMap((c) => c.lines.map((l) => ({ ...l, caller: "pharmacy", facilityId: null })));
+  const lines = intake.length ? intake : incident?.transcript ?? [];
   const wave = useSpeakingWave(lines.length, lines[lines.length - 1]?.speaker ?? null, live);
   const names = new Map(incident?.facilities.map((f) => [f.facility.id, f.facility.name]) ?? []);
   useEffect(() => {
@@ -93,7 +98,7 @@ function Transcript({ incident, live }: { incident: Incident | null; live: boole
         </HeadRight>
       </Head>
       <Body ref={body}>
-        {!lines.length && <Empty>Calls appear here as coordinators phone in (or when you simulate responders).</Empty>}
+        {!lines.length && <Empty>Calls appear here as they happen: the pharmacy's report, then coordinators (or simulated responders).</Empty>}
         {lines.map((l, i) => (
           <Turn key={i} $agent={l.speaker === "agent"}>
             <Who $agent={l.speaker === "agent"} title={l.facilityId ? names.get(l.facilityId) : undefined}>
@@ -172,10 +177,12 @@ function Activity({ events }: { events: BusEvent[] }) {
   );
 }
 
-export function ActivityPanels({ incident, events, live }: { incident: Incident | null; events: BusEvent[]; live: boolean }) {
+export function ActivityPanels({ incident, events, live, calls }: {
+  incident: Incident | null; events: BusEvent[]; live: boolean; calls: LiveCall[];
+}) {
   return (
     <Grid>
-      <Transcript incident={incident} live={live} />
+      <Transcript incident={incident} live={live} calls={calls} />
       <Pager alerts={incident?.alerts ?? []} />
       <Activity events={events} />
     </Grid>

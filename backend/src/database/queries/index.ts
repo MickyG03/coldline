@@ -217,6 +217,24 @@ export function insertAudit(incidentId: string | null, eventType: string, payloa
   return { id: Number(res.lastInsertRowid), incidentId, eventType, payload, createdAt: ts };
 }
 
+/**
+ * Transcript lines a call spoke before its incident existed (a pharmacy call opens the incident
+ * at the end of intake). Linked through the call's call.ended row, which carries the incident.
+ */
+export function listPreIncidentTranscript(incidentId: string): AuditLogEntry[] {
+  const rows = getDb().prepare(
+    `SELECT * FROM audit_log
+     WHERE event_type = 'transcript.line' AND incident_id IS NULL
+       AND json_extract(payload, '$.callId') IN (
+         SELECT json_extract(payload, '$.callId') FROM audit_log
+         WHERE event_type = 'call.ended' AND incident_id = ?)
+     ORDER BY id`,
+  ).all(incidentId);
+  return rows.map((r: Row) => ({
+    id: r.id, incidentId: r.incident_id, eventType: r.event_type, payload: JSON.parse(r.payload), createdAt: r.created_at,
+  }));
+}
+
 export function listAudit(incidentId?: string, types?: string[]): AuditLogEntry[] {
   const where = [incidentId ? "incident_id = ?" : null, types?.length ? `event_type IN (${types.map(() => "?").join(", ")})` : null]
     .filter(Boolean);

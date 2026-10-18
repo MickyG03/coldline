@@ -1,6 +1,6 @@
 import { GraphQLScalarType } from "graphql";
 import type { FacilityResponse, Incident, JevLabels } from "../database/models/index.ts";
-import { incidentCode, listAudit, listDecisions, listFacilityResponses } from "../database/queries/index.ts";
+import { incidentCode, listAudit, listDecisions, listFacilityResponses, listPreIncidentTranscript } from "../database/queries/index.ts";
 import { getFacility, getPharmacies, getPharmacy, neighborhoodOf, type Facility, type Pharmacy } from "../database/seed/index.ts";
 import { describeOption, viableOptions, type ApprovalOption } from "../services/approval.ts";
 import { demo } from "../services/demo.ts";
@@ -93,9 +93,10 @@ export const typeResolvers = {
       return top ? recommendation(top) : null;
     },
     decisions: (i: Incident) => listDecisions(i.id),
+    // The pharmacy's own intake call comes first (spoken before the incident existed), then the rest.
     transcript: (i: Incident) =>
-      auditOf<{ facilityId?: string; caller: string; speaker: string; text: string }>(i.id, "transcript.line")
-        .map((e) => ({ at: e.createdAt, ...e.payload })),
+      [...listPreIncidentTranscript(i.id), ...listAudit(i.id, ["transcript.line"])]
+        .map((e) => ({ at: e.createdAt, ...(e.payload as { facilityId?: string; caller: string; speaker: string; text: string }) })),
     alerts: (i: Incident) =>
       auditOf<Record<string, unknown>>(i.id, "alert.sent").map((e) => ({ id: e.id, at: e.createdAt, ...e.payload })),
     audit: (i: Incident, { limit }: { limit?: number }) =>

@@ -88,7 +88,7 @@ function Dashboard() {
           </Side>
         </MainCard>
         <div id="activity">
-          <ActivityPanels incident={incident} events={events}
+          <ActivityPanels incident={incident} events={events} calls={calls}
             live={!!data?.demo.simulating || calls.some((c) => !c.endedAt)} />
         </div>
       </Content>
